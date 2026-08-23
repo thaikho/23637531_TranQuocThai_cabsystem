@@ -1553,6 +1553,15 @@ Quy tắc
 ---
 
 ## 10.6. Quy tắc thông báo
+| Sự kiện | Đối tượng nhận |
+| :--- | :--- |
+| Yêu cầu đặt xe được tiếp nhận | Khách hàng |
+| Tài xế nhận chuyến | Khách hàng |
+| Tài xế đến điểm đón | Khách hàng |
+| Chuyến hoàn thành | Khách hàng |
+| Thanh toán có kết quả | Khách hàng |
+| Có chuyến mới | Tài xế |
+| Có thay đổi liên quan đến chuyến | Tài xế |
 ---
 
 ## 10.7. Quy tắc quản lý vận hành
@@ -1596,4 +1605,13 @@ Hệ thống cần cung cấp dữ liệu phục vụ các báo cáo về số l
 ---
 
 ## 10.9. Quy tắc bảo mật và dữ liệu
-
+| ID | Quy tắc |
+| :--- | :--- |
+| BR-S01 | Khách hàng và tài xế phải được xác thực trước khi sử dụng chức năng yêu cầu tài khoản. |
+| BR-S02 | Chức năng quản trị phải được phân quyền. |
+| BR-S03 | Thông tin cá nhân phải được bảo vệ. |
+| BR-S04 | Thông tin phương tiện phải được bảo vệ. |
+| BR-S05 | Dữ liệu vị trí tài xế phải được bảo vệ. |
+| BR-S06 | Dữ liệu giao dịch phải được bảo vệ. |
+| BR-S07 | Không lưu trực tiếp dữ liệu nhạy cảm của thẻ/tài khoản thanh toán trong CAB. |
+| BR-S08 | Các thao tác quan trọng phải được lưu vết để phục vụ kiểm tra sự cố. |
