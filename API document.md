@@ -1,1728 +1,618 @@
-# API DOCUMENTATION – CAB SYSTEM
+# 23637531_TranQuocThai_capsystem_api
+# CAB System – Tài liệu Đặc tả API
+---
+## Tổng quan tài liệu
 
-> **Project:** CAB System
-> **Version:** 1.0.0
-> **API Type:** RESTful API
-> **Data Format:** JSON
-> **Authentication:** Bearer Token (JWT)
+Tài liệu này đặc tả các API của **CAB System**, được xây dựng dựa trên kết quả phân tích yêu cầu nghiệp vụ (Business Requirements BR01–BR21) và các Use Case (UC01–UC22) đã xác định ở tài liệu phân tích nghiệp vụ. Tài liệu API được trình bày theo từng bước, tương tự cấu trúc tài liệu nghiệp vụ, để nhóm phát triển (Backend/Frontend/QA) và các bên liên quan dễ đối chiếu API với yêu cầu gốc.
 
 ---
-
-# TABLE OF CONTENTS
-
-1. [Overview](#1-overview)
-2. [General Conventions](#2-general-conventions)
-3. [Authentication](#3-authentication-api)
-4. [Customer API](#4-customer-api)
-5. [Driver API](#5-driver-api)
-6. [Vehicle API](#6-vehicle-api)
-7. [Ride API](#7-ride-api)
-8. [Driver Assignment API](#8-driver-assignment-api)
-9. [Trip Management API](#9-trip-management-api)
-10. [Location API](#10-location-api)
-11. [Fare API](#11-fare-api)
-12. [Payment API](#12-payment-api)
-13. [Transaction API](#13-transaction-api)
-14. [Notification API](#14-notification-api)
-15. [Rating API](#15-rating-api)
-16. [Report API](#16-report-api)
-17. [Admin API](#17-admin-api)
-18. [Error Codes](#18-error-codes)
-19. [API Endpoint Summary](#19-api-endpoint-summary)
-
----
-
-# 1. OVERVIEW
+# BƯỚC 1 – QUY ƯỚC CHUNG
 
 ## 1.1. Base URL
 
+| Môi trường | Base URL |
+| --- | --- |
+| Production | `https://api.cabsystem.com/api/v1` |
+| Local/Dev | `http://localhost:8080/api/v1` |
+
+## 1.2. Xác thực
+
+Hệ thống sử dụng **Bearer Token (JWT)**. Mọi API yêu cầu tài khoản phải gửi header:
 ```text
-http://localhost:8080/api/v1
-```
-
-Production:
-
-```text
-https://api.cabsystem.com/api/v1
-```
-
----
-
-## 1.2. Content Type
-
-All requests and responses use:
-
-```http
-Content-Type: application/json
-```
-
----
-
-## 1.3. Authentication
-
-Protected APIs require a JWT token.
-
-```http
 Authorization: Bearer <access_token>
 ```
+Quy tắc xác thực tuân theo BR-S01: Khách hàng và tài xế phải được xác thực trước khi sử dụng chức năng yêu cầu tài khoản.
 
-Example:
+## 1.3. Định dạng dữ liệu chung
 
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
----
-
-## 1.4. Standard Success Response
-
+**Response thành công:**
 ```json
 {
   "success": true,
-  "message": "Request successful",
-  "data": {}
+  "data": {},
+  "message": "OK"
 }
 ```
 
----
-
-## 1.5. Standard Error Response
-
+**Response lỗi:**
 ```json
 {
   "success": false,
-  "error_code": "VALIDATION_ERROR",
-  "message": "Invalid request data"
+  "error_code": "RESOURCE_NOT_FOUND",
+  "message": "Mô tả lỗi chi tiết"
 }
 ```
 
+## 1.4. Bảng mã trạng thái HTTP (Response Code)
+
+| Code | Ý nghĩa |
+| --- | --- |
+| 200 OK | Thành công |
+| 201 Created | Tạo mới thành công |
+| 400 Bad Request | Dữ liệu đầu vào không hợp lệ |
+| 401 Unauthorized | Chưa xác thực / token không hợp lệ |
+| 403 Forbidden | Không có quyền thực hiện (BR02, BR-S02) |
+| 404 Not Found | Không tìm thấy tài nguyên |
+| 409 Conflict | Xung đột trạng thái nghiệp vụ |
+| 500 Internal Server Error | Lỗi hệ thống |
 ---
 
-## 1.6. Pagination Response
+# BƯỚC 2 – PHÂN RÃ API THEO MODULE
 
-```json
-{
-  "success": true,
-  "data": {
-    "items": [],
-    "pagination": {
-      "page": 1,
-      "limit": 10,
-      "total": 100,
-      "total_pages": 10
-    }
-  }
-}
+## 2.1. Khách hàng (Customer APIs)
+```text
+Customer APIs
+├── Auth
+│   ├── POST /auth/register
+│   └── POST /auth/login
+├── User
+│   ├── GET /users/me
+│   └── PUT /users/me
+├── Booking
+│   ├── POST /bookings
+│   ├── GET /bookings/{booking_id}
+│   └── POST /bookings/{booking_id}/cancel
+├── Trip
+│   ├── GET /trips/{trip_id}
+│   ├── GET /trips/{trip_id}/fare
+│   ├── POST /trips/{trip_id}/payment
+│   └── POST /trips/{trip_id}/rating
+└── Notification
+    └── GET /notifications
 ```
 
----
-
-# 2. GENERAL CONVENTIONS
-
-## 2.1. HTTP Methods
-
-| Method | Description             |
-| ------ | ----------------------- |
-| GET    | Retrieve data           |
-| POST   | Create data             |
-| PUT    | Update entire resource  |
-| PATCH  | Update part of resource |
-| DELETE | Delete resource         |
-
----
-
-## 2.2. HTTP Status Codes
-
-| Code | Description           |
-| ---- | --------------------- |
-| 200  | Success               |
-| 201  | Created successfully  |
-| 204  | Deleted successfully  |
-| 400  | Bad Request           |
-| 401  | Unauthorized          |
-| 403  | Forbidden             |
-| 404  | Not Found             |
-| 409  | Conflict              |
-| 422  | Validation Error      |
-| 500  | Internal Server Error |
-
----
-
-## 2.3. User Roles
-
-| Role     | Description     |
-| -------- | --------------- |
-| CUSTOMER | Customer        |
-| DRIVER   | Driver          |
-| ADMIN    | Administrator   |
-| OPERATOR | System Operator |
-
----
-
-# 3. AUTHENTICATION API
-
----
-
-## 3.1. Register Customer
-
-### Endpoint
-
-```http
-POST /auth/register
+## 2.2. Tài xế (Driver APIs)
+```text
+Driver APIs
+├── Auth
+│   └── POST /auth/login
+├── Profile & Vehicle
+│   └── PUT /drivers/me/profile
+├── Trạng thái & Vị trí
+│   ├── PUT /drivers/me/status
+│   └── POST /drivers/me/location
+├── Xử lý chuyến
+│   ├── POST /drivers/me/ride-requests/{request_id}/respond
+│   └── PUT /trips/{trip_id}/status
+└── Notification
+    └── GET /notifications
 ```
 
-### Description
+## 2.3. Nhân viên vận hành (Admin/Operator APIs)
+```text
+Operator APIs
+├── Trip
+│   ├── GET /admin/trips/active
+│   └── POST /admin/trips/{trip_id}/resolve
+├── Payment
+│   └── GET /admin/payments
+└── Report
+    └── GET /admin/reports/summary
+```
 
-Create a new customer account.
+## 2.4. Hệ thống nội bộ / Bên thứ ba (System & External)
+```text
+System / Webhook APIs
+├── Payment Provider
+│   └── POST /webhooks/payments/{provider}
+└── Notification Provider
+    └── (internal event dispatch – không public endpoint)
+```
+---
 
+# BƯỚC 3 – SƠ ĐỒ LUỒNG GỌI API (theo luồng nghiệp vụ trung tâm)
+
+```mermaid
+flowchart LR
+    A["POST /bookings"] --> B["Hệ thống tìm & phân công tài xế (internal)"]
+    B --> C["POST /drivers/me/ride-requests/id/respond"]
+    C --> D["GET /bookings/booking_id (client poll/subscribe trạng thái)"]
+    D --> E["PUT /trips/trip_id/status"]
+    E --> F["GET /trips/trip_id/fare"]
+    F --> G["POST /trips/trip_id/payment"]
+    G --> H["POST /trips/trip_id/rating"]
+```
+Sơ đồ trên tương ứng với luồng nghiệp vụ trung tâm: Đặt xe → Tìm tài xế → Phân công tài xế → Thực hiện chuyến → Tính cước → Thanh toán → Đánh giá.
+---
+
+# BƯỚC 4 – ĐẶC TẢ CHI TIẾT API
+
+## API01 – Đăng ký tài khoản
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Đăng ký tài khoản |
+| **Endpoint** | `/auth/register` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng / Tài xế |
+| **Header** | `Content-Type: application/json` |
+| **Tiền điều kiện** | Số điện thoại/email chưa tồn tại trong hệ thống |
+| **Hậu điều kiện** | Tài khoản được tạo, ở trạng thái chưa xác thực hoặc đã kích hoạt |
 ### Request Body
-
 ```json
 {
   "full_name": "Nguyen Van A",
-  "phone": "0901234567",
-  "email": "nguyenvana@gmail.com",
-  "password": "12345678"
+  "phone": "0909123456",
+  "email": "a@example.com",
+  "password": "SecurePass123",
+  "role": "customer"
 }
 ```
-
-### Parameters
-
-| Field     | Type   | Required | Description        |
-| --------- | ------ | -------- | ------------------ |
-| full_name | string | Yes      | Customer full name |
-| phone     | string | Yes      | Phone number       |
-| email     | string | Yes      | Email address      |
-| password  | string | Yes      | Password           |
-
-### Success Response
-
-**HTTP 201**
-
+### Response (201)
 ```json
 {
   "success": true,
-  "message": "Registration successful",
-  "data": {
-    "user_id": 1,
-    "full_name": "Nguyen Van A",
-    "phone": "0901234567",
-    "email": "nguyenvana@gmail.com",
-    "role": "CUSTOMER"
-  }
+  "data": { "user_id": "U1001", "full_name": "Nguyen Van A", "role": "customer" }
 }
 ```
-
-### Errors
-
-| Code | Error Code   | Description          |
-| ---- | ------------ | -------------------- |
-| 400  | INVALID_DATA | Invalid request      |
-| 409  | PHONE_EXISTS | Phone already exists |
-| 409  | EMAIL_EXISTS | Email already exists |
-
+### Basic Flow
+| Client | Server |
+| --- | --- |
+| 1. Gửi thông tin đăng ký. | 2. Kiểm tra trùng lặp số điện thoại/email. |
+|  | 3. Tạo tài khoản mới. |
+|  | 4. Trả về thông tin tài khoản. |
+### Exception
+* Email/số điện thoại đã tồn tại → trả về lỗi `EMAIL_ALREADY_EXISTS` / `PHONE_ALREADY_EXISTS` (400).
 ---
 
-## 3.2. Login
-
-### Endpoint
-
-```http
-POST /auth/login
-```
-
+## API02 – Đăng nhập
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Đăng nhập |
+| **Endpoint** | `/auth/login` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng / Tài xế |
 ### Request Body
-
 ```json
-{
-  "phone": "0901234567",
-  "password": "12345678"
-}
+{ "phone": "0909123456", "password": "SecurePass123" }
 ```
-
-### Success Response
-
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "token_type": "Bearer",
-    "user": {
-      "user_id": 1,
-      "full_name": "Nguyen Van A",
-      "role": "CUSTOMER"
-    }
-  }
-}
-```
-
-### Errors
-
-| Code | Error Code          |
-| ---- | ------------------- |
-| 401  | INVALID_CREDENTIALS |
-| 404  | USER_NOT_FOUND      |
-
----
-
-## 3.3. Get Current User
-
-### Endpoint
-
-```http
-GET /auth/me
-```
-
-### Header
-
-```http
-Authorization: Bearer <access_token>
-```
-
-### Response
-
+### Response (200)
 ```json
 {
   "success": true,
   "data": {
-    "user_id": 1,
-    "full_name": "Nguyen Van A",
-    "phone": "0901234567",
-    "email": "nguyenvana@gmail.com",
-    "role": "CUSTOMER"
+    "access_token": "eyJhbGciOi...",
+    "refresh_token": "dGhpcyBpcyBh...",
+    "user": { "user_id": "U1001", "role": "customer" }
   }
 }
 ```
-
+### Exception
+* Sai thông tin đăng nhập → `INVALID_CREDENTIALS` (401).
+* Tài khoản bị khóa → `ACCOUNT_LOCKED` (403).
 ---
 
-## 3.4. Logout
-
-### Endpoint
-
-```http
-POST /auth/logout
-```
-
-### Response
-
+## API03 – Quản lý thông tin cá nhân
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Lấy / cập nhật thông tin cá nhân |
+| **Endpoint** | `/users/me` |
+| **Method** | `GET` \| `PUT` |
+| **Actor chính** | Khách hàng / Tài xế |
+| **Header** | `Authorization: Bearer <token>` (bắt buộc) |
+### Request Body (PUT)
 ```json
-{
-  "success": true,
-  "message": "Logout successful"
-}
+{ "full_name": "Nguyen Van A", "email": "a_new@example.com" }
 ```
-
+### Exception
+* Chưa xác thực → `UNAUTHORIZED` (401).
+* Dữ liệu không hợp lệ → `VALIDATION_ERROR` (400).
 ---
 
-# 4. CUSTOMER API
-
----
-
-## 4.1. Get Customer List
-
-```http
-GET /customers
-```
-
-### Authorization
-
-```text
-ADMIN
-OPERATOR
-```
-
-### Query Parameters
-
-| Parameter | Type    | Required | Description       |
-| --------- | ------- | -------- | ----------------- |
-| page      | integer | No       | Page number       |
-| limit     | integer | No       | Number of records |
-| keyword   | string  | No       | Search keyword    |
-
-### Example
-
-```http
-GET /customers?page=1&limit=10
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "customer_id": 1,
-        "full_name": "Nguyen Van A",
-        "phone": "0901234567",
-        "email": "nguyenvana@gmail.com"
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 10,
-      "total": 1,
-      "total_pages": 1
-    }
-  }
-}
-```
-
----
-
-## 4.2. Get Customer Detail
-
-```http
-GET /customers/{customer_id}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "customer_id": 1,
-    "full_name": "Nguyen Van A",
-    "phone": "0901234567",
-    "email": "nguyenvana@gmail.com"
-  }
-}
-```
-
----
-
-## 4.3. Update Customer
-
-```http
-PUT /customers/{customer_id}
-```
-
+## API04 – Cập nhật hồ sơ & phương tiện tài xế
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Quản lý hồ sơ tài xế |
+| **Endpoint** | `/drivers/me/profile` |
+| **Method** | `PUT` |
+| **Actor chính** | Tài xế |
+| **Actor phụ** | Nhân viên vận hành (tra cứu/hỗ trợ) |
 ### Request Body
-
 ```json
 {
-  "full_name": "Nguyen Van A",
-  "email": "newemail@gmail.com"
+  "license_number": "B2-123456",
+  "vehicle": { "plate_number": "51H-123.45", "vehicle_type": "4-seat", "brand": "Toyota Vios" }
 }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Customer updated successfully"
-}
-```
-
+### Exception
+* Giấy phép không hợp lệ → `INVALID_LICENSE` (400).
+* Phương tiện đã được đăng ký → `VEHICLE_ALREADY_REGISTERED` (400).
 ---
 
-## 4.4. Delete Customer
-
-```http
-DELETE /customers/{customer_id}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Customer deleted successfully"
-}
-```
-
----
-
-# 5. DRIVER API
-
----
-
-## 5.1. Create Driver
-
-```http
-POST /drivers
-```
-
-### Authorization
-
-```text
-ADMIN
-```
-
+## API05 – Cập nhật trạng thái tài xế
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Cập nhật trạng thái hoạt động |
+| **Endpoint** | `/drivers/me/status` |
+| **Method** | `PUT` |
+| **Actor chính** | Tài xế |
 ### Request Body
-
 ```json
-{
-  "full_name": "Tran Van B",
-  "phone": "0912345678",
-  "email": "driver@gmail.com",
-  "license_number": "B123456789",
-  "password": "12345678"
-}
+{ "status": "online" }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Driver created successfully",
-  "data": {
-    "driver_id": 1,
-    "status": "OFFLINE"
-  }
-}
-```
-
+`status`: `online` \| `offline` \| `busy`. Khi tài xế chuyển sang trạng thái không sẵn sàng, hệ thống không đề xuất chuyến mới cho tài xế đó.
 ---
 
-## 5.2. Get Driver List
-
-```http
-GET /drivers
-```
-
-### Query Parameters
-
-| Parameter | Description       |
-| --------- | ----------------- |
-| page      | Page number       |
-| limit     | Number of records |
-| status    | Driver status     |
-| keyword   | Search keyword    |
-
----
-
-## 5.3. Get Driver Detail
-
-```http
-GET /drivers/{driver_id}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "driver_id": 1,
-    "full_name": "Tran Van B",
-    "phone": "0912345678",
-    "license_number": "B123456789",
-    "status": "AVAILABLE"
-  }
-}
-```
-
----
-
-## 5.4. Update Driver
-
-```http
-PUT /drivers/{driver_id}
-```
-
+## API06 – Cập nhật vị trí tài xế
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Cập nhật vị trí tài xế |
+| **Endpoint** | `/drivers/me/location` |
+| **Method** | `POST` |
+| **Actor chính** | Tài xế |
+| **Mô tả** | Gọi định kỳ khi tài xế online hoặc đang thực hiện chuyến, phục vụ tìm tài xế gần khách hàng (BR08) và ước tính thời gian đến. |
 ### Request Body
-
 ```json
-{
-  "full_name": "Tran Van B",
-  "email": "newdriver@gmail.com"
-}
+{ "lat": 10.7769, "lng": 106.7009, "heading": 120, "timestamp": "2026-09-07T10:05:00Z" }
 ```
-
 ---
 
-## 5.5. Update Driver Status
-
-```http
-PATCH /drivers/{driver_id}/status
-```
-
+## API07 – Tạo yêu cầu đặt xe
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Tạo yêu cầu đặt xe |
+| **Endpoint** | `/bookings` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng |
+| **Tiền điều kiện** | Khách hàng đã đăng nhập |
+| **Hậu điều kiện** | Yêu cầu đặt xe được tạo, hệ thống bắt đầu tìm tài xế |
 ### Request Body
-
 ```json
 {
-  "status": "AVAILABLE"
+  "pickup": { "lat": 10.776, "lng": 106.700, "address": "123 Nguyen Hue, Q1" },
+  "dropoff": { "lat": 10.800, "lng": 106.660, "address": "456 Cong Hoa, Tan Binh" },
+  "vehicle_type": "4-seat",
+  "payment_method": "cash"
 }
 ```
-
-### Driver Status
-
-| Status    | Description       |
-| --------- | ----------------- |
-| AVAILABLE | Available         |
-| BUSY      | Currently working |
-| OFFLINE   | Offline           |
-
----
-
-# 6. VEHICLE API
-
----
-
-## 6.1. Create Vehicle
-
-```http
-POST /vehicles
+### Response (201)
+```json
+{ "success": true, "data": { "booking_id": "BK20260907001", "status": "searching_driver" } }
 ```
+### Exception
+* Vị trí không hợp lệ → `INVALID_LOCATION` (400).
+* Ngoài khu vực phục vụ → `NO_SERVICE_AREA` (400).
+---
 
+## API08 – Theo dõi trạng thái yêu cầu đặt xe / chuyến đi
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Theo dõi trạng thái |
+| **Endpoint** | `/bookings/{booking_id}` |
+| **Method** | `GET` |
+| **Actor chính** | Khách hàng |
+| **Actor phụ** | CAB System / Tài xế |
+### URL Parameters
+* `booking_id` (bắt buộc, path): mã định danh yêu cầu đặt xe.
+### Response (200)
+```json
+{
+  "success": true,
+  "data": {
+    "booking_id": "BK20260907001",
+    "status": "driver_assigned",
+    "driver": { "driver_id": "D2002", "name": "Tran Van B", "vehicle_plate": "51H-123.45" },
+    "eta_minutes": 5
+  }
+}
+```
+`status`: `searching_driver`, `driver_assigned`, `driver_arriving`, `picked_up`, `on_trip`, `completed`, `cancelled`, `no_driver_found`.
+### Alternative Flow
+* Chưa có tài xế → trả về `status = searching_driver`.
+* Đã có tài xế → trả về thông tin tài xế và `eta_minutes`.
+### Exception
+* Không tìm thấy yêu cầu → `BOOKING_NOT_FOUND` (404).
+---
+
+## API09 – Hủy yêu cầu đặt xe
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Hủy yêu cầu đặt xe |
+| **Endpoint** | `/bookings/{booking_id}/cancel` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng |
 ### Request Body
-
 ```json
-{
-  "driver_id": 1,
-  "license_plate": "59A-12345",
-  "vehicle_type": "CAR",
-  "brand": "Toyota",
-  "model": "Vios"
-}
+{ "reason": "Đổi kế hoạch di chuyển" }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Vehicle created successfully",
-  "data": {
-    "vehicle_id": 1
-  }
-}
-```
-
+### Exception
+* Chuyến đã hoàn thành → `BOOKING_ALREADY_COMPLETED` (409).
+* Không được phép hủy ở trạng thái hiện tại → `CANCEL_NOT_ALLOWED` (409).
 ---
 
-## 6.2. Get Vehicle List
-
-```http
-GET /vehicles
-```
-
----
-
-## 6.3. Get Vehicle Detail
-
-```http
-GET /vehicles/{vehicle_id}
-```
-
----
-
-## 6.4. Update Vehicle
-
-```http
-PUT /vehicles/{vehicle_id}
-```
-
+## API10 – Tài xế nhận / từ chối yêu cầu chuyến
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Phản hồi yêu cầu chuyến |
+| **Endpoint** | `/drivers/me/ride-requests/{request_id}/respond` |
+| **Method** | `POST` |
+| **Actor chính** | Tài xế |
+| **Actor phụ** | CAB System |
 ### Request Body
-
 ```json
-{
-  "license_plate": "59A-99999",
-  "brand": "Toyota",
-  "model": "Vios"
-}
+{ "action": "accept" }
 ```
-
+`action`: `accept` \| `reject`.
+### Basic Flow
+| Client (Tài xế) | Server |
+| --- | --- |
+|  | 1. Gửi thông báo chuyến mới đến tài xế. |
+| 2. Tài xế xem thông tin chuyến. | 3. Hiển thị thông tin chuyến. |
+| 4. Tài xế phản hồi (accept/reject). | 5. Ghi nhận kết quả. |
+|  | 6. Thông báo kết quả cho khách hàng. |
+### Alternative Flow
+* Tài xế từ chối → hệ thống tìm tài xế tiếp theo (BR07).
+### Exception
+* Tài xế không phản hồi kịp thời gian quy định → `REQUEST_EXPIRED` (409), hệ thống tự động tìm tài xế khác (BR06) mà không yêu cầu khách hàng tạo lại yêu cầu (BR08).
+* Yêu cầu đã được tài xế khác nhận → `REQUEST_ALREADY_TAKEN` (409).
 ---
 
-## 6.5. Delete Vehicle
-
-```http
-DELETE /vehicles/{vehicle_id}
-```
-
----
-
-# 7. RIDE API
-
----
-
-## 7.1. Create Ride Booking
-
-```http
-POST /rides
-```
-
-### Authorization
-
-```text
-CUSTOMER
-```
-
+## API11 – Cập nhật trạng thái chuyến đi
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Cập nhật trạng thái chuyến |
+| **Endpoint** | `/trips/{trip_id}/status` |
+| **Method** | `PUT` |
+| **Actor chính** | Tài xế |
 ### Request Body
-
 ```json
-{
-  "pickup": {
-    "address": "12 Nguyen Van Bao, Go Vap",
-    "latitude": 10.8231,
-    "longitude": 106.6297
-  },
-  "destination": {
-    "address": "Ben Thanh Market",
-    "latitude": 10.7720,
-    "longitude": 106.6984
-  },
-  "vehicle_type": "CAR"
-}
+{ "status": "arrived_pickup" }
 ```
+`status` phải tuân theo đúng thứ tự trạng thái: `arrived_pickup` → `picked_up` → `on_trip` → `completed` (mục 10.4 tài liệu nghiệp vụ).
+### Exception
+* Chuyển trạng thái không hợp lệ (sai thứ tự) → `INVALID_STATUS_TRANSITION` (409).
+---
 
-### Response
-
+## API12 – Lấy chi tiết chuyến đi
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Chi tiết chuyến đi |
+| **Endpoint** | `/trips/{trip_id}` |
+| **Method** | `GET` |
+| **Actor chính** | Khách hàng / Tài xế |
+### Response (200)
 ```json
 {
   "success": true,
-  "message": "Ride request created successfully",
-  "data": {
-    "ride_id": 1001,
-    "status": "SEARCHING_DRIVER"
-  }
+  "data": { "trip_id": "TR20260907001", "status": "on_trip", "pickup_time": "2026-09-07T10:10:00Z", "distance_km": null, "fare": null }
 }
 ```
-
+### Exception
+* Không tìm thấy chuyến → `404 Not Found`.
 ---
 
-## 7.2. Get Ride List
-
-```http
-GET /rides
-```
-
-### Query Parameters
-
-| Parameter   | Description       |
-| ----------- | ----------------- |
-| page        | Page number       |
-| limit       | Number of records |
-| status      | Ride status       |
-| customer_id | Customer ID       |
-| driver_id   | Driver ID         |
-
----
-
-## 7.3. Get Ride Detail
-
-```http
-GET /rides/{ride_id}
-```
-
-### Response
-
+## API13 – Tính cước sau khi hoàn thành chuyến
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Tính cước |
+| **Endpoint** | `/trips/{trip_id}/fare` |
+| **Method** | `GET` |
+| **Actor chính** | Khách hàng |
+| **Tiền điều kiện** | `trip.status = completed` (BR11: chỉ xác định cước sau khi chuyến hoàn thành) |
+### Response (200)
 ```json
 {
   "success": true,
-  "data": {
-    "ride_id": 1001,
-    "customer_id": 1,
-    "driver_id": 2,
-    "pickup_address": "12 Nguyen Van Bao",
-    "destination_address": "Ben Thanh Market",
-    "status": "DRIVER_ASSIGNED"
-  }
+  "data": { "trip_id": "TR20260907001", "distance_km": 8.4, "duration_minutes": 22, "vehicle_type": "4-seat", "total_fare": 95000, "currency": "VND" }
 }
 ```
-
+### Exception
+* Chuyến chưa hoàn thành → `TRIP_NOT_COMPLETED` (409).
 ---
 
-## 7.4. Cancel Ride
-
-```http
-PATCH /rides/{ride_id}/cancel
-```
-
+## API14 – Thanh toán chuyến đi
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Thanh toán |
+| **Endpoint** | `/trips/{trip_id}/payment` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng |
+| **Actor phụ** | Nhà cung cấp thanh toán |
 ### Request Body
-
 ```json
-{
-  "reason": "Customer changed plan"
-}
+{ "payment_method": "e-wallet", "provider": "momo" }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride cancelled successfully"
-}
-```
-
+`payment_method`: `cash` \| `e-wallet` \| `card`.
+### Basic Flow
+| Client | Server |
+| --- | --- |
+| 1. Khách hàng chọn phương thức thanh toán. | 2. Hiển thị số tiền cần thanh toán. |
+| 3. Khách hàng xác nhận thanh toán. | 4. Gửi yêu cầu đến nhà cung cấp thanh toán nếu là điện tử. |
+|  | 5. Nhận và ghi nhận kết quả giao dịch. |
+|  | 6. Thông báo kết quả cho khách hàng. |
+### Alternative Flow
+* Chọn **tiền mặt** → ghi nhận trực tiếp theo quy trình doanh nghiệp.
+* Chọn **thanh toán điện tử** → chuyển yêu cầu đến nhà cung cấp thanh toán bên ngoài (BR13).
+### Exception
+* Thanh toán thất bại → `PAYMENT_FAILED` (402), thông báo cho khách hàng và cho phép xử lý lại theo chính sách doanh nghiệp (BR15).
+* Nhà cung cấp không phản hồi kịp → `PAYMENT_PROVIDER_TIMEOUT` (504).
+> Lưu ý bảo mật (BR14, BR-S07): hệ thống CAB không lưu trực tiếp thông tin nhạy cảm của thẻ/tài khoản thanh toán.
 ---
 
-# 8. DRIVER ASSIGNMENT API
-
----
-
-## 8.1. Search Available Drivers
-
-```http
-POST /rides/{ride_id}/drivers/search
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "ride_id": 1001,
-    "drivers_found": 5
-  }
-}
-```
-
----
-
-## 8.2. Send Ride Request to Driver
-
-```http
-POST /rides/{ride_id}/driver-requests
-```
-
+## API15 – Webhook kết quả thanh toán
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Webhook thanh toán |
+| **Endpoint** | `/webhooks/payments/{provider}` |
+| **Method** | `POST` |
+| **Actor chính** | Nhà cung cấp thanh toán |
+| **Header** | `X-Signature: <hmac_signature>` (bắt buộc, xác thực nguồn gọi) |
 ### Request Body
-
 ```json
-{
-  "driver_id": 5
-}
+{ "payment_id": "PM20260907001", "status": "success", "transaction_ref": "MOMO-998877" }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride request sent successfully"
-}
-```
-
+### Exception
+* Chữ ký không hợp lệ → `INVALID_SIGNATURE` (401).
 ---
 
-## 8.3. Driver Accept Ride
-
-```http
-PATCH /rides/{ride_id}/accept
-```
-
-### Authorization
-
-```text
-DRIVER
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride accepted successfully",
-  "data": {
-    "ride_id": 1001,
-    "status": "DRIVER_ASSIGNED"
-  }
-}
-```
-
+## API16 – Danh sách thông báo
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Lấy danh sách thông báo |
+| **Endpoint** | `/notifications` |
+| **Method** | `GET` |
+| **Actor chính** | Khách hàng / Tài xế |
+### URL Parameters
+* `unread_only` (tùy chọn): `true` \| `false`.
+### Bảng sự kiện thông báo hệ thống tự phát sinh
+| Sự kiện | Đối tượng nhận |
+| :--- | :--- |
+| Yêu cầu đặt xe được tiếp nhận | Khách hàng |
+| Tài xế nhận chuyến | Khách hàng |
+| Tài xế đến điểm đón | Khách hàng |
+| Chuyến hoàn thành | Khách hàng |
+| Thanh toán có kết quả | Khách hàng |
+| Có chuyến mới | Tài xế |
+| Có thay đổi liên quan đến chuyến | Tài xế |
 ---
 
-## 8.4. Driver Reject Ride
-
-```http
-PATCH /rides/{ride_id}/reject
-```
-
+## API17 – Khách hàng đánh giá tài xế
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Đánh giá tài xế |
+| **Endpoint** | `/trips/{trip_id}/rating` |
+| **Method** | `POST` |
+| **Actor chính** | Khách hàng |
+| **Tiền điều kiện** | Chuyến đi đã hoàn thành |
 ### Request Body
-
 ```json
-{
-  "reason": "Too far"
-}
+{ "stars": 5, "comment": "Tài xế thân thiện, đi đúng giờ" }
 ```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride rejected successfully"
-}
-```
-
+`stars`: số nguyên 1–5 (bắt buộc).
+### Exception
+* Chuyến chưa hoàn thành → `TRIP_NOT_COMPLETED` (409).
+* Đã đánh giá trước đó → `ALREADY_RATED` (409).
 ---
 
-# 9. TRIP MANAGEMENT API
-
+## API18 – Danh sách chuyến đang diễn ra
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Giám sát chuyến đang diễn ra |
+| **Endpoint** | `/admin/trips/active` |
+| **Method** | `GET` |
+| **Actor chính** | Nhân viên vận hành |
+### Exception
+* Không có quyền truy cập → `FORBIDDEN` (403), theo BR-S02.
 ---
 
-## 9.1. Update Ride Status
-
-```http
-PATCH /rides/{ride_id}/status
-```
-
+## API19 – Xử lý chuyến gặp sự cố
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Xử lý sự cố chuyến đi |
+| **Endpoint** | `/admin/trips/{trip_id}/resolve` |
+| **Method** | `POST` |
+| **Actor chính** | Nhân viên vận hành |
 ### Request Body
-
 ```json
-{
-  "status": "ARRIVING"
-}
+{ "action": "reassign_driver", "note": "Tài xế báo sự cố xe" }
 ```
-
-### Ride Status
-
-| Status           | Description          |
-| ---------------- | -------------------- |
-| SEARCHING_DRIVER | Searching for driver |
-| DRIVER_ASSIGNED  | Driver assigned      |
-| ARRIVING         | Driver is arriving   |
-| ARRIVED          | Driver arrived       |
-| PICKED_UP        | Customer picked up   |
-| IN_PROGRESS      | Trip in progress     |
-| COMPLETED        | Trip completed       |
-| CANCELLED        | Trip cancelled       |
-
 ---
 
-## 9.2. Driver Arrived
-
-```http
-PATCH /rides/{ride_id}/arrived
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Driver arrived at pickup location",
-  "data": {
-    "ride_id": 1001,
-    "status": "ARRIVED"
-  }
-}
-```
-
+## API20 – Tra cứu giao dịch thanh toán
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Tra cứu giao dịch |
+| **Endpoint** | `/admin/payments` |
+| **Method** | `GET` |
+| **Actor chính** | Nhân viên vận hành |
+### URL Parameters
+* `from_date`, `to_date` (tùy chọn): khoảng thời gian tra cứu.
+* `status` (tùy chọn): `success` \| `failed` \| `pending`.
 ---
 
-## 9.3. Pickup Customer
-
-```http
-PATCH /rides/{ride_id}/pickup
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Customer picked up successfully"
-}
-```
-
----
-
-## 9.4. Start Ride
-
-```http
-PATCH /rides/{ride_id}/start
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride started successfully",
-  "data": {
-    "status": "IN_PROGRESS"
-  }
-}
-```
-
----
-
-## 9.5. Complete Ride
-
-```http
-PATCH /rides/{ride_id}/complete
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Ride completed successfully",
-  "data": {
-    "ride_id": 1001,
-    "status": "COMPLETED"
-  }
-}
-```
-
----
-
-# 10. LOCATION API
-
----
-
-## 10.1. Update Driver Location
-
-```http
-POST /drivers/{driver_id}/locations
-```
-
-### Request Body
-
-```json
-{
-  "latitude": 10.8231,
-  "longitude": 106.6297
-}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Driver location updated successfully"
-}
-```
-
----
-
-## 10.2. Get Latest Driver Location
-
-```http
-GET /drivers/{driver_id}/locations/latest
-```
-
-### Response
-
+## API21 – Báo cáo tổng hợp hoạt động
+| Thành phần | Nội dung |
+| --- | --- |
+| **Tên API** | Báo cáo tổng hợp |
+| **Endpoint** | `/admin/reports/summary` |
+| **Method** | `GET` |
+| **Actor chính** | Ban lãnh đạo / Nhân viên vận hành |
+### URL Parameters
+* `from_date`, `to_date` (bắt buộc): khoảng thời gian báo cáo.
+### Response (200)
 ```json
 {
   "success": true,
   "data": {
-    "driver_id": 1,
-    "latitude": 10.8231,
-    "longitude": 106.6297,
-    "updated_at": "2026-09-07T18:00:00Z"
+    "total_trips": 1520,
+    "total_revenue": 145000000,
+    "completion_rate": 0.94,
+    "cancellation_rate": 0.06,
+    "top_drivers": [{ "driver_id": "D2002", "trips_completed": 88 }]
   }
 }
 ```
-
 ---
 
-# 11. FARE API
+# BƯỚC 5 – QUY TẮC TÍNH CƯỚC & THANH TOÁN LIÊN QUAN ĐẾN API
 
+```mermaid
+flowchart TD
+    A["Chuyến hoàn thành"] --> B["GET /trips/id/fare"]
+    B --> C["Khách hàng chọn phương thức thanh toán"]
+    C --> D{"Phương thức?"}
+    D -->|Tiền mặt| E["Ghi nhận trực tiếp"]
+    D -->|Điện tử| F["POST /trips/id/payment"]
+    F --> G["Nhà cung cấp thanh toán xử lý"]
+    G --> H["POST /webhooks/payments/provider"]
+    H --> I{"Thành công?"}
+    I -->|Có| J["Ghi nhận thanh toán"]
+    I -->|Không| K["Thông báo thất bại - cho phép xử lý lại"]
+```
 ---
 
-## 11.1. Calculate Fare
+# BƯỚC 6 – BẢNG MÃ LỖI TỔNG HỢP
 
-```http
-POST /rides/{ride_id}/fare
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "ride_id": 1001,
-    "distance": 8.5,
-    "duration": 25,
-    "fare": 85000,
-    "currency": "VND"
-  }
-}
-```
-
+| error_code | HTTP Status | Ý nghĩa |
+| --- | --- | --- |
+| EMAIL_ALREADY_EXISTS | 400 | Email đã được đăng ký |
+| PHONE_ALREADY_EXISTS | 400 | Số điện thoại đã được đăng ký |
+| INVALID_CREDENTIALS | 401 | Sai thông tin đăng nhập |
+| ACCOUNT_LOCKED | 403 | Tài khoản bị khóa |
+| UNAUTHORIZED | 401 | Chưa xác thực |
+| FORBIDDEN | 403 | Không đủ quyền (BR-S02) |
+| VALIDATION_ERROR | 400 | Dữ liệu không hợp lệ |
+| INVALID_LOCATION | 400 | Vị trí đón/trả không hợp lệ |
+| NO_SERVICE_AREA | 400 | Khu vực ngoài phạm vi phục vụ |
+| BOOKING_NOT_FOUND | 404 | Không tìm thấy yêu cầu đặt xe |
+| BOOKING_ALREADY_COMPLETED | 409 | Chuyến đã hoàn thành, không thể hủy |
+| CANCEL_NOT_ALLOWED | 409 | Không được phép hủy ở trạng thái hiện tại |
+| NO_DRIVER_AVAILABLE | 409 | Không tìm được tài xế phù hợp (BR09) |
+| REQUEST_EXPIRED | 409 | Tài xế không phản hồi kịp thời gian quy định |
+| REQUEST_ALREADY_TAKEN | 409 | Yêu cầu đã được tài xế khác nhận |
+| INVALID_STATUS_TRANSITION | 409 | Chuyển trạng thái chuyến không hợp lệ |
+| TRIP_NOT_COMPLETED | 409 | Thao tác yêu cầu chuyến đã hoàn thành |
+| PAYMENT_FAILED | 402 | Thanh toán điện tử thất bại (BR15) |
+| PAYMENT_PROVIDER_TIMEOUT | 504 | Nhà cung cấp thanh toán không phản hồi kịp |
+| ALREADY_RATED | 409 | Chuyến đã được đánh giá trước đó |
+| INVALID_SIGNATURE | 401 | Chữ ký webhook không hợp lệ |
+| INVALID_LICENSE | 400 | Giấy phép lái xe không hợp lệ |
+| VEHICLE_ALREADY_REGISTERED | 400 | Phương tiện đã được đăng ký bởi tài khoản khác |
 ---
 
-## 11.2. Get Ride Fare
-
-```http
-GET /rides/{ride_id}/fare
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "ride_id": 1001,
-    "fare": 85000,
-    "currency": "VND"
-  }
-}
-```
-
----
-
-# 12. PAYMENT API
-
----
-
-## 12.1. Create Payment
-
-```http
-POST /payments
-```
-
-### Request Body
-
-```json
-{
-  "ride_id": 1001,
-  "payment_method": "CASH"
-}
-```
-
-### Payment Methods
-
-| Method     | Description        |
-| ---------- | ------------------ |
-| CASH       | Cash payment       |
-| ELECTRONIC | Electronic payment |
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Payment created successfully",
-  "data": {
-    "payment_id": 5001,
-    "status": "PENDING"
-  }
-}
-```
-
----
-
-## 12.2. Process Payment
-
-```http
-POST /payments/{payment_id}/process
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Payment processed successfully",
-  "data": {
-    "payment_id": 5001,
-    "status": "SUCCESS"
-  }
-}
-```
-
----
-
-## 12.3. Get Payment Detail
-
-```http
-GET /payments/{payment_id}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "payment_id": 5001,
-    "ride_id": 1001,
-    "amount": 85000,
-    "payment_method": "ELECTRONIC",
-    "status": "SUCCESS"
-  }
-}
-```
-
----
-
-## 12.4. Retry Payment
-
-```http
-PATCH /payments/{payment_id}/retry
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Payment retry initiated successfully"
-}
-```
-
----
-
-# 13. TRANSACTION API
-
----
-
-## 13.1. Get Transaction List
-
-```http
-GET /transactions
-```
-
-### Query Parameters
-
-| Parameter | Description        |
-| --------- | ------------------ |
-| page      | Page number        |
-| limit     | Number of records  |
-| ride_id   | Ride ID            |
-| status    | Transaction status |
-| from_date | Start date         |
-| to_date   | End date           |
-
----
-
-## 13.2. Get Transaction Detail
-
-```http
-GET /transactions/{transaction_id}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "transaction_id": 1,
-    "payment_id": 5001,
-    "ride_id": 1001,
-    "amount": 85000,
-    "status": "SUCCESS",
-    "created_at": "2026-09-07T18:00:00Z"
-  }
-}
-```
-
----
-
-# 14. NOTIFICATION API
-
----
-
-## 14.1. Get Notification List
-
-```http
-GET /notifications
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "notification_id": 1,
-      "title": "Driver Assigned",
-      "message": "Your driver has accepted the ride",
-      "is_read": false,
-      "created_at": "2026-09-07T18:00:00Z"
-    }
-  ]
-}
-```
-
----
-
-## 14.2. Send Notification
-
-```http
-POST /notifications
-```
-
-### Request Body
-
-```json
-{
-  "user_id": 1,
-  "title": "Ride Completed",
-  "message": "Your ride has been completed"
-}
-```
-
----
-
-## 14.3. Mark Notification as Read
-
-```http
-PATCH /notifications/{notification_id}/read
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Notification marked as read"
-}
-```
-
----
-
-# 15. RATING API
-
----
-
-## 15.1. Create Driver Rating
-
-```http
-POST /rides/{ride_id}/ratings
-```
-
-### Authorization
-
-```text
-CUSTOMER
-```
-
-### Request Body
-
-```json
-{
-  "rating": 5,
-  "comment": "Driver was friendly and professional"
-}
-```
-
-### Parameters
-
-| Field   | Type    | Required | Description        |
-| ------- | ------- | -------- | ------------------ |
-| rating  | integer | Yes      | Rating from 1 to 5 |
-| comment | string  | No       | Customer comment   |
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Rating submitted successfully"
-}
-```
-
----
-
-## 15.2. Get Driver Ratings
-
-```http
-GET /drivers/{driver_id}/ratings
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "average_rating": 4.8,
-    "total_ratings": 120,
-    "items": [
-      {
-        "rating_id": 1,
-        "rating": 5,
-        "comment": "Very good driver"
-      }
-    ]
-  }
-}
-```
-
----
-
-# 16. REPORT API
-
----
-
-## 16.1. Get Overview Report
-
-```http
-GET /reports/overview
-```
-
-### Authorization
-
-```text
-ADMIN
-OPERATOR
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "total_rides": 1000,
-    "completed_rides": 850,
-    "cancelled_rides": 150,
-    "revenue": 85000000
-  }
-}
-```
-
----
-
-## 16.2. Get Revenue Report
-
-```http
-GET /reports/revenue
-```
-
-### Query Parameters
-
-| Parameter | Type | Required |
-| --------- | ---- | -------- |
-| from_date | date | No       |
-| to_date   | date | No       |
-
-### Example
-
-```http
-GET /reports/revenue?from_date=2026-09-01&to_date=2026-09-30
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "from_date": "2026-09-01",
-    "to_date": "2026-09-30",
-    "total_revenue": 85000000,
-    "currency": "VND"
-  }
-}
-```
-
----
-
-## 16.3. Get Ride Report
-
-```http
-GET /reports/rides
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "total_rides": 1000,
-    "completed": 850,
-    "cancelled": 150
-  }
-}
-```
-
----
-
-## 16.4. Get Completion Rate Report
-
-```http
-GET /reports/completion-rate
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "completion_rate": 85
-  }
-}
-```
-
----
-
-## 16.5. Get Cancellation Rate Report
-
-```http
-GET /reports/cancellation-rate
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "cancellation_rate": 15
-  }
-}
-```
-
----
-
-## 16.6. Get Driver Performance Report
-
-```http
-GET /reports/drivers-performance
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "driver_id": 1,
-      "driver_name": "Tran Van B",
-      "total_rides": 150,
-      "completed_rides": 140,
-      "cancelled_rides": 10,
-      "average_rating": 4.8
-    }
-  ]
-}
-```
-
----
-
-# 17. ADMIN API
-
----
-
-## 17.1. Get Role List
-
-```http
-GET /roles
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "role_id": 1,
-      "role_name": "ADMIN"
-    },
-    {
-      "role_id": 2,
-      "role_name": "CUSTOMER"
-    },
-    {
-      "role_id": 3,
-      "role_name": "DRIVER"
-    }
-  ]
-}
-```
-
----
-
-## 17.2. Get Permission List
-
-```http
-GET /permissions
-```
-
----
-
-## 17.3. Assign Permissions to Role
-
-```http
-POST /roles/{role_id}/permissions
-```
-
-### Request Body
-
-```json
-{
-  "permission_ids": [
-    1,
-    2,
-    3
-  ]
-}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Permissions assigned successfully"
-}
-```
-
----
-
-## 17.4. Monitor Active Rides
-
-```http
-GET /rides/monitoring/active
-```
-
-### Authorization
-
-```text
-ADMIN
-OPERATOR
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "ride_id": 1001,
-      "customer_id": 1,
-      "driver_id": 2,
-      "status": "IN_PROGRESS"
-    }
-  ]
-}
-```
-
----
-
-## 17.5. Report Ride Incident
-
-```http
-POST /rides/{ride_id}/incidents
-```
-
-### Request Body
-
-```json
-{
-  "incident_type": "CONNECTION_ERROR",
-  "description": "Driver lost internet connection"
-}
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "Incident reported successfully"
-}
-```
-
----
-
-# 18. ERROR CODES
-
-| HTTP Code | Error Code            | Description                 |
-| --------- | --------------------- | --------------------------- |
-| 400       | BAD_REQUEST           | Invalid request             |
-| 400       | INVALID_DATA          | Invalid data                |
-| 401       | UNAUTHORIZED          | Authentication required     |
-| 401       | INVALID_TOKEN         | Invalid token               |
-| 401       | TOKEN_EXPIRED         | Token expired               |
-| 401       | INVALID_CREDENTIALS   | Incorrect login information |
-| 403       | FORBIDDEN             | Permission denied           |
-| 404       | NOT_FOUND             | Resource not found          |
-| 404       | USER_NOT_FOUND        | User not found              |
-| 404       | DRIVER_NOT_FOUND      | Driver not found            |
-| 404       | RIDE_NOT_FOUND        | Ride not found              |
-| 404       | PAYMENT_NOT_FOUND     | Payment not found           |
-| 409       | CONFLICT              | Resource conflict           |
-| 409       | PHONE_EXISTS          | Phone already exists        |
-| 409       | EMAIL_EXISTS          | Email already exists        |
-| 422       | VALIDATION_ERROR      | Validation failed           |
-| 500       | INTERNAL_SERVER_ERROR | System error                |
-
----
-
-# 19. API ENDPOINT SUMMARY
-
-| #  | Method | Endpoint                         | Description            |
-| -- | ------ | -------------------------------- | ---------------------- |
-| 1  | POST   | `/auth/register`                 | Register customer      |
-| 2  | POST   | `/auth/login`                    | Login                  |
-| 3  | GET    | `/auth/me`                       | Get current user       |
-| 4  | POST   | `/auth/logout`                   | Logout                 |
-| 5  | GET    | `/customers`                     | Get customers          |
-| 6  | GET    | `/customers/{id}`                | Get customer detail    |
-| 7  | PUT    | `/customers/{id}`                | Update customer        |
-| 8  | DELETE | `/customers/{id}`                | Delete customer        |
-| 9  | POST   | `/drivers`                       | Create driver          |
-| 10 | GET    | `/drivers`                       | Get drivers            |
-| 11 | GET    | `/drivers/{id}`                  | Get driver detail      |
-| 12 | PUT    | `/drivers/{id}`                  | Update driver          |
-| 13 | PATCH  | `/drivers/{id}/status`           | Update driver status   |
-| 14 | POST   | `/vehicles`                      | Create vehicle         |
-| 15 | GET    | `/vehicles`                      | Get vehicles           |
-| 16 | GET    | `/vehicles/{id}`                 | Get vehicle detail     |
-| 17 | PUT    | `/vehicles/{id}`                 | Update vehicle         |
-| 18 | DELETE | `/vehicles/{id}`                 | Delete vehicle         |
-| 19 | POST   | `/rides`                         | Create ride            |
-| 20 | GET    | `/rides`                         | Get rides              |
-| 21 | GET    | `/rides/{id}`                    | Get ride detail        |
-| 22 | PATCH  | `/rides/{id}/cancel`             | Cancel ride            |
-| 23 | POST   | `/rides/{id}/drivers/search`     | Search drivers         |
-| 24 | POST   | `/rides/{id}/driver-requests`    | Send ride request      |
-| 25 | PATCH  | `/rides/{id}/accept`             | Accept ride            |
-| 26 | PATCH  | `/rides/{id}/reject`             | Reject ride            |
-| 27 | PATCH  | `/rides/{id}/status`             | Update ride status     |
-| 28 | PATCH  | `/rides/{id}/arrived`            | Driver arrived         |
-| 29 | PATCH  | `/rides/{id}/pickup`             | Pickup customer        |
-| 30 | PATCH  | `/rides/{id}/start`              | Start ride             |
-| 31 | PATCH  | `/rides/{id}/complete`           | Complete ride          |
-| 32 | POST   | `/drivers/{id}/locations`        | Update location        |
-| 33 | GET    | `/drivers/{id}/locations/latest` | Get location           |
-| 34 | POST   | `/rides/{id}/fare`               | Calculate fare         |
-| 35 | GET    | `/rides/{id}/fare`               | Get fare               |
-| 36 | POST   | `/payments`                      | Create payment         |
-| 37 | POST   | `/payments/{id}/process`         | Process payment        |
-| 38 | GET    | `/payments/{id}`                 | Get payment            |
-| 39 | PATCH  | `/payments/{id}/retry`           | Retry payment          |
-| 40 | GET    | `/transactions`                  | Get transactions       |
-| 41 | GET    | `/transactions/{id}`             | Get transaction detail |
-| 42 | GET    | `/notifications`                 | Get notifications      |
-| 43 | POST   | `/notifications`                 | Send notification      |
-| 44 | PATCH  | `/notifications/{id}/read`       | Mark as read           |
-| 45 | POST   | `/rides/{id}/ratings`            | Create rating          |
-| 46 | GET    | `/drivers/{id}/ratings`          | Get driver ratings     |
-| 47 | GET    | `/reports/overview`              | Overview report        |
-| 48 | GET    | `/reports/revenue`               | Revenue report         |
-| 49 | GET    | `/reports/rides`                 | Ride report            |
-| 50 | GET    | `/reports/completion-rate`       | Completion rate        |
-| 51 | GET    | `/reports/cancellation-rate`     | Cancellation rate      |
-| 52 | GET    | `/reports/drivers-performance`   | Driver performance     |
-| 53 | GET    | `/roles`                         | Get roles              |
-| 54 | GET    | `/permissions`                   | Get permissions        |
-| 55 | POST   | `/roles/{id}/permissions`        | Assign permissions     |
-| 56 | GET    | `/rides/monitoring/active`       | Monitor active rides   |
-| 57 | POST   | `/rides/{id}/incidents`          | Report incident        |
-
----
-
-# END OF DOCUMENT
-
-**CAB System API Documentation**
-**Version:** 1.0.0
+# BƯỚC 7 – GHI CHÚ BẢO MẬT & LƯU VẾT (BR-S01 – BR-S08)
+
+* Mọi API yêu cầu tài khoản đều phải xác thực qua Bearer Token (BR-S01).
+* API nhóm `/admin/*` bắt buộc kiểm tra phân quyền theo vai trò (BR-S02).
+* Dữ liệu vị trí tài xế, thông tin cá nhân, thông tin phương tiện và dữ liệu giao dịch được truyền qua HTTPS và mã hóa khi lưu trữ (BR-S03, BR-S04, BR-S05, BR-S06).
+* Không có API nào nhận hoặc trả về trực tiếp số thẻ/tài khoản thanh toán — toàn bộ xử lý qua nhà cung cấp thanh toán bên ngoài (BR-S07).
+* Các thao tác quan trọng (đổi trạng thái chuyến, thanh toán, thao tác quản trị) được ghi log phục vụ audit (BR-S08).
