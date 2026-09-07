@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API16
+  summary: Lấy danh sách thông báo
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Notifications
+paths:
+  /notifications:
+    get:
+      summary: "API16 - Lấy danh sách thông báo"
+      operationId: getNotifications
+      tags: [Notifications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: unread_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Danh sách thông báo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          enum:
+            - booking_received
+            - driver_assigned
+            - driver_arrived
+            - trip_completed
+            - payment_result
+            - new_ride_request
+            - trip_update
+        message:
+          type: string
+        read:
+          type: boolean

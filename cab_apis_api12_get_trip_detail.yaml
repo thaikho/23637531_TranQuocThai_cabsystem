@@ -1,0 +1,72 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API12
+  summary: Lấy chi tiết chuyến đi
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Trips
+paths:
+  /trips/{trip_id}:
+    get:
+      summary: "API12 - Lấy chi tiết chuyến đi"
+      operationId: getTripDetail
+      tags: [Trips]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: trip_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chi tiết chuyến đi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+        '404':
+          description: Không tìm thấy chuyến đi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TripResponse:
+      type: object
+      properties:
+        trip_id:
+          type: string
+          example: TR20260907001
+        status:
+          type: string
+          enum: [arrived_pickup, picked_up, on_trip, completed]
+        pickup_time:
+          type: string
+          format: date-time
+        distance_km:
+          type: number
+          nullable: true
+        fare:
+          type: number
+          nullable: true
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string

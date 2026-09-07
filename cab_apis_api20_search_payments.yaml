@@ -1,0 +1,60 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API20
+  summary: Tra cứu giao dịch thanh toán
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Admin
+paths:
+  /admin/payments:
+    get:
+      summary: "API20 - Tra cứu giao dịch thanh toán"
+      operationId: searchPayments
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, failed, pending]
+      responses:
+        '200':
+          description: Danh sách giao dịch
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PaymentResponse:
+      type: object
+      properties:
+        payment_id:
+          type: string
+          example: PM20260907001
+        status:
+          type: string
+          enum: [success, failed, pending]
+        amount:
+          type: number

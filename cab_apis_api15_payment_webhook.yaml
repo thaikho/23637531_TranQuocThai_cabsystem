@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API15
+  summary: Webhook kết quả thanh toán
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Webhooks
+paths:
+  /webhooks/payments/{provider}:
+    post:
+      summary: "API15 - Webhook kết quả thanh toán"
+      operationId: paymentWebhook
+      tags: [Webhooks]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            example: momo
+        - name: X-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_id:
+                  type: string
+                status:
+                  type: string
+                  enum: [success, failed]
+                transaction_ref:
+                  type: string
+      responses:
+        '200':
+          description: Đã xử lý webhook
+        '401':
+          description: INVALID_SIGNATURE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string

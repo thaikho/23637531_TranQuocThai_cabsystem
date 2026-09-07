@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API21
+  summary: Báo cáo tổng hợp hoạt động
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Reports
+paths:
+  /admin/reports/summary:
+    get:
+      summary: "API21 - Báo cáo tổng hợp hoạt động"
+      operationId: getReportSummary
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: from_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Số liệu báo cáo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSummary'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ReportSummary:
+      type: object
+      properties:
+        total_trips:
+          type: integer
+        total_revenue:
+          type: number
+        completion_rate:
+          type: number
+          format: float
+        cancellation_rate:
+          type: number
+          format: float
+        top_drivers:
+          type: array
+          items:
+            type: object
+            properties:
+              driver_id:
+                type: string
+              trips_completed:
+                type: integer

@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API03a
+  summary: Lấy thông tin cá nhân
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Users
+paths:
+  /users/me:
+    get:
+      summary: "API03 - Lấy thông tin cá nhân"
+      operationId: getMyProfile
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Thông tin người dùng hiện tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: UNAUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: U1001
+        full_name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [customer, driver, operator, admin]
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string

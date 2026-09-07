@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API17
+  summary: Khách hàng đánh giá tài xế
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Ratings
+paths:
+  /trips/{trip_id}/rating:
+    post:
+      summary: "API17 - Khách hàng đánh giá tài xế"
+      operationId: rateTrip
+      tags: [Ratings]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: trip_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stars]
+              properties:
+                stars:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Đánh giá được ghi nhận
+        '409':
+          description: TRIP_NOT_COMPLETED / ALREADY_RATED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string

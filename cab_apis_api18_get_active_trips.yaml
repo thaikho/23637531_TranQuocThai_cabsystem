@@ -1,0 +1,68 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API18
+  summary: Danh sách chuyến đang diễn ra
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Admin
+paths:
+  /admin/trips/active:
+    get:
+      summary: "API18 - Danh sách chuyến đang diễn ra"
+      operationId: getActiveTrips
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Danh sách chuyến đang diễn ra
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TripResponse'
+        '403':
+          description: FORBIDDEN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TripResponse:
+      type: object
+      properties:
+        trip_id:
+          type: string
+          example: TR20260907001
+        status:
+          type: string
+          enum: [arrived_pickup, picked_up, on_trip, completed]
+        pickup_time:
+          type: string
+          format: date-time
+        distance_km:
+          type: number
+          nullable: true
+        fare:
+          type: number
+          nullable: true
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string

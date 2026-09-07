@@ -1,0 +1,58 @@
+openapi: 3.0.0
+info:
+  title: CAB System API - API09
+  summary: Hủy yêu cầu đặt xe
+  version: 1.0.0
+servers:
+  - url: https://api.cabsystem.com/api/v1
+  - url: http://localhost:8080/api/v1
+tags:
+  - name: Bookings
+paths:
+  /bookings/{booking_id}/cancel:
+    post:
+      summary: "API09 - Hủy yêu cầu đặt xe"
+      operationId: cancelBooking
+      tags: [Bookings]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Hủy thành công
+        '409':
+          description: BOOKING_ALREADY_COMPLETED / CANCEL_NOT_ALLOWED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          example: RESOURCE_NOT_FOUND
+        message:
+          type: string
