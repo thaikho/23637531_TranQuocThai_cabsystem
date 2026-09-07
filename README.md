@@ -1,4 +1,4 @@
-# 23637531_TranQuocThai_capsytem
+# 23637531_TranQuocThai_cabsystem
 # CAB System – Phân tích yêu cầu nghiệp vụ
 ---
 ## Tổng quan dự án
