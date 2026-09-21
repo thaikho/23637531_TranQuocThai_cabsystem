@@ -2,8 +2,17 @@
 
 ```mermaid
 classDiagram
+    %% Định nghĩa bảng màu Pastel phân loại theo DDD giống thiết kế chuẩn
+    classDef cGreen fill:#E8F8F0,stroke:#27AE60,stroke-width:1.5px,color:#1E3A2F;
+    classDef cPink fill:#FDEDEC,stroke:#E74C3C,stroke-width:1.5px,color:#4A1515;
+    classDef cBlue fill:#EBF5FB,stroke:#3498DB,stroke-width:1.5px,color:#1B3854;
+    classDef cYellow fill:#FEFDE8,stroke:#F1C40F,stroke-width:1.5px,color:#4D3E02;
+    classDef cPurple fill:#F4ECF7,stroke:#8E44AD,stroke-width:1.5px,color:#3D184E;
+    classDef cOrange fill:#FDF2E9,stroke:#E67E22,stroke-width:1.5px,color:#4E2606;
+    classDef cCyan fill:#E0F7FA,stroke:#00ACC1,stroke-width:1.5px,color:#00363A;
+
     namespace DinhDanh_PhanQuyen {
-        class TaiKhoan {
+        class TaiKhoan:::cGreen {
             <<AggregateRoot>>
             +maTaiKhoan
             +tenDangNhap
@@ -11,16 +20,16 @@ classDiagram
             +loaiNguoiDung
             +trangThai
         }
-        class VaiTro {
+        class VaiTro:::cGreen {
             <<Entity>>
             +tenVaiTro
         }
-        class Quyen {
+        class Quyen:::cGreen {
             <<ValueObject>>
             +chucNang
             +thaoTac
         }
-        class NhatKyThaoTac {
+        class NhatKyThaoTac:::cPurple {
             <<Entity>>
             +maTaiKhoan
             +hanhDong
@@ -33,7 +42,7 @@ classDiagram
     TaiKhoan ..> NhatKyThaoTac : ghi vết
 
     namespace QuanLyKhachHang {
-        class KhachHang {
+        class KhachHang:::cBlue {
             <<AggregateRoot>>
             +maKhachHang
             +maTaiKhoan
@@ -42,7 +51,7 @@ classDiagram
             +email
             +trangThai
         }
-        class PhuongThucDaLuu {
+        class PhuongThucDaLuu:::cBlue {
             <<ValueObject>>
             +loai
             +maThamChieu
@@ -52,21 +61,21 @@ classDiagram
     KhachHang ..> TaiKhoan : maTaiKhoan
 
     namespace TaiXe_PhuongTien {
-        class TaiXe {
+        class TaiXe:::cYellow {
             <<AggregateRoot>>
             +maTaiXe
             +maTaiKhoan
             +hoSo
             +trangThai
         }
-        class PhuongTien {
+        class PhuongTien:::cOrange {
             <<Entity>>
             +maPhuongTien
             +bienSo
             +hangXe
             +maLoaiXe
         }
-        class LoaiXe {
+        class LoaiXe:::cOrange {
             <<Entity>>
             +maLoaiXe
             +tenLoaiXe
@@ -78,7 +87,7 @@ classDiagram
     TaiXe ..> TaiKhoan : maTaiKhoan
 
     namespace DinhViTaiXe {
-        class ViTriTaiXe {
+        class ViTriTaiXe:::cBlue {
             <<AggregateRoot>>
             +maTaiXe
             +toaDo
@@ -86,10 +95,10 @@ classDiagram
             +thoiDiemCapNhat
         }
     }
-    ViTriTaiXe ..> TaiXe : maTaiXe (tham chiếu, KHÔNG composition)
+    ViTriTaiXe ..> TaiXe : maTaiXe (tham chiếu)
 
     namespace DatXe {
-        class YeuCauDatXe {
+        class YeuCauDatXe:::cPink {
             <<AggregateRoot>>
             +maYeuCau
             +maKhachHang
@@ -103,7 +112,7 @@ classDiagram
     YeuCauDatXe ..> KhachHang : maKhachHang
 
     namespace PhanCongTaiXe {
-        class QuaTrinhPhanCong {
+        class QuaTrinhPhanCong:::cPink {
             <<AggregateRoot>>
             +maPhanCong
             +maYeuCau
@@ -111,7 +120,7 @@ classDiagram
             +maLoaiXe
             +trangThai
         }
-        class LoiMoi {
+        class LoiMoi:::cPurple {
             <<Entity>>
             +maLoiMoi
             +maTaiXe
@@ -125,7 +134,7 @@ classDiagram
     LoiMoi ..> TaiXe : maTaiXe
 
     namespace QuanLyChuyenDi {
-        class ChuyenDi {
+        class ChuyenDi:::cPink {
             <<AggregateRoot>>
             +maChuyen
             +maYeuCau
@@ -134,7 +143,7 @@ classDiagram
             +maPhuongTien
             +trangThai
         }
-        class DiaDiem {
+        class DiaDiem:::cYellow {
             <<ValueObject>>
             +diaChi
             +toaDo
@@ -147,17 +156,17 @@ classDiagram
     ChuyenDi ..> PhuongTien : maPhuongTien
 
     namespace TinhCuoc {
-        class CuocPhi {
+        class CuocPhi:::cCyan {
             <<AggregateRoot>>
             +maCuoc
             +maChuyen
             +tongTien
         }
     }
-    CuocPhi ..> ChuyenDi : maChuyen (qua sự kiện TomTatChuyen)
+    CuocPhi ..> ChuyenDi : maChuyen
 
     namespace XuLyThanhToan {
-        class ThanhToan {
+        class ThanhToan:::cGreen {
             <<AggregateRoot>>
             +maThanhToan
             +maChuyen
@@ -166,7 +175,7 @@ classDiagram
             +trangThai
             +soLanThu
         }
-        class GiaoDich {
+        class GiaoDich:::cPurple {
             <<Entity>>
             +maGiaoDich
             +maThamChieuBenThuBa
@@ -178,7 +187,7 @@ classDiagram
     ThanhToan ..> KhachHang : maKhachHang
 
     namespace DichVuThongBao {
-        class ThongBao {
+        class ThongBao:::cPurple {
             <<AggregateRoot>>
             +maThongBao
             +nguoiNhan
@@ -191,7 +200,7 @@ classDiagram
     ThongBao ..> TaiXe : maNguoiNhan
 
     namespace PhanHoiDanhGia {
-        class DanhGia {
+        class DanhGia:::cCyan {
             <<AggregateRoot>>
             +maDanhGia
             +maChuyen
@@ -204,7 +213,7 @@ classDiagram
     DanhGia ..> ChuyenDi : maChuyen
 
     namespace VanHanh {
-        class SuCo {
+        class SuCo:::cPink {
             <<AggregateRoot>>
             +maSuCo
             +maChuyen
@@ -216,19 +225,19 @@ classDiagram
     SuCo ..> TaiKhoan : maNhanVienXuLy
 
     namespace BaoCao {
-        class TongHopChuyenTheoNgay {
+        class TongHopChuyenTheoNgay:::cBlue {
             <<ReadModel>>
             +ngay
             +soChuyen
             +soHoanThanh
             +soHuy
         }
-        class DoanhThuTheoNgay {
+        class DoanhThuTheoNgay:::cGreen {
             <<ReadModel>>
             +ngay
             +doanhThu
         }
-        class HieuQuaTaiXe {
+        class HieuQuaTaiXe:::cYellow {
             <<ReadModel>>
             +maTaiXe
             +tyLeTuChoi
